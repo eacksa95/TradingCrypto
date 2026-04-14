@@ -1,0 +1,42 @@
+stages:
+  - test
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+
+# ── Test ──────────────────────────────────────────────────────
+syntax-check:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd backend
+    - npm ci
+    - node --check src/index.js
+    - node --check src/config/database.js
+    - node --check src/services/claudeService.js
+    - node --check src/services/binanceService.js
+    - node --check src/routes/trades.js
+    - node --check src/routes/wallets.js
+    - node --check src/routes/alerts.js
+    - node --check src/routes/analysis.js
+    - node --check src/routes/market.js
+    - echo "✅ Todos los archivos pasan el check de sintaxis"
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ── Deploy a Railway ──────────────────────────────────────────
+# Railway se auto-deploya desde GitLab via webhook.
+# Este job es informativo; Railway detecta el push y despliega solo.
+deploy-production:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "🚀 Push a main → Railway despliega automáticamente"
+    - echo "   URL del healthcheck: $RAILWAY_URL/health"
+  environment:
+    name: production
+  only:
+    - main

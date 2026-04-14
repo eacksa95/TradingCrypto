@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradingCrypto</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span>TradingCrypto<small>Dashboard</small></span>
+    </div>
+
+    <nav style="flex:1;overflow-y:auto">
+      <a class="nav-item active" data-page="dashboard">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="wallets">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 7v13a2 2 0 002 2h16v-5"/><path d="M18 12h3v4h-3a2 2 0 010-4z"/></svg>
+        <span>Billeteras</span>
+      </a>
+      <a class="nav-item" data-page="trades">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span>Operativas</span>
+      </a>
+      <a class="nav-item" data-page="alerts">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span>Alertas TV</span>
+      </a>
+      <a class="nav-item" data-page="analysis">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>Análisis IA</span>
+      </a>
+      <a class="nav-item" data-page="market">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        <span>Mercado</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span id="status-dot" class="status-dot"></span>
+      <span id="status-text" style="font-size:12px;color:var(--text2)">Verificando...</span>
+    </div>
+  </nav>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <h1 class="topbar-title" id="topbar-title">Dashboard</h1>
+      <div class="topbar-right">
+        <span id="topbar-date" class="text-muted" style="font-size:13px"></span>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         DASHBOARD
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-dashboard" class="page active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Portfolio Total</div>
+          <div class="stat-value" id="dash-balance">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">PnL Realizado</div>
+          <div class="stat-value" id="dash-pnl">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value" id="dash-winrate">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Operativas Abiertas</div>
+          <div class="stat-value" id="dash-open">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Billeteras Activas</div>
+          <div class="stat-value" id="dash-wallets">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Operativas</div>
+          <div class="stat-value" id="dash-trades-total">—</div>
+        </div>
+      </div>
+
+      <div class="row-2col">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Últimas Alertas de TradingView</h2>
+            <a class="btn btn-sm nav-item" style="padding:4px 10px;font-size:12px" data-page="alerts">Ver todas</a>
+          </div>
+          <div id="dash-alerts-list" class="alert-feed"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Billeteras</h2>
+            <a class="btn btn-sm nav-item" style="padding:4px 10px;font-size:12px" data-page="wallets">Ver todas</a>
+          </div>
+          <div id="dash-wallets-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         WALLETS
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-wallets" class="page">
+      <div class="page-actions">
+        <div></div>
+        <button class="btn btn-primary" onclick="openWalletModal()">+ Nueva Billetera</button>
+      </div>
+      <div id="wallets-grid" class="wallets-grid"></div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TRADES
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-trades" class="page">
+      <div class="stats-bar">
+        <span>Operativas: <strong id="ts-total">—</strong></span>
+        <span>Abiertas: <strong id="ts-open">—</strong></span>
+        <span>PnL: <strong id="ts-pnl">—</strong></span>
+        <span>Win Rate: <strong id="ts-wr">—</strong></span>
+        <span>Mejor: <strong id="ts-best">—</strong></span>
+        <span>Peor: <strong id="ts-worst">—</strong></span>
+      </div>
+      <div class="page-actions">
+        <div class="filter-row">
+          <select id="filter-status" class="input-sm" onchange="loadTrades()">
+            <option value="">Todos los estados</option>
+            <option value="open">Abiertas</option>
+            <option value="closed">Cerradas</option>
+            <option value="cancelled">Canceladas</option>
+          </select>
+          <select id="filter-type" class="input-sm" onchange="loadTrades()">
+            <option value="">Todos los tipos</option>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+            <option value="spot_buy">Spot Buy</option>
+            <option value="spot_sell">Spot Sell</option>
+          </select>
+          <input type="text" id="filter-symbol" class="input-sm" placeholder="Símbolo..." oninput="loadTrades()" />
+        </div>
+        <button class="btn btn-primary" onclick="openTradeModal()">+ Nueva Operativa</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Símbolo</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Entrada</th>
+              <th>Cierre</th>
+              <th>Cantidad</th>
+              <th>Leverage</th>
+              <th>PnL</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="trades-table-body">
+            <tr><td colspan="9"><div class="empty"><h3>Sin operativas</h3></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ALERTS
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-alerts" class="page">
+      <div id="alerts-list" class="alert-feed"></div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ANALYSIS
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-analysis" class="page">
+      <div class="row-2col" style="margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Análisis Manual</h2>
+          </div>
+          <div style="padding:0 24px 20px">
+            <div class="form-group" style="margin-bottom:14px">
+              <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">Símbolo</label>
+              <input type="text" id="manual-symbol" class="input" placeholder="BTCUSDT" value="BTCUSDT" />
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+              <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">Timeframe</label>
+              <select id="manual-tf" class="input">
+                <option value="15m">15 minutos</option>
+                <option value="1h" selected>1 hora</option>
+                <option value="4h">4 horas</option>
+                <option value="1d">1 día</option>
+              </select>
+            </div>
+            <button id="btn-manual-analysis" class="btn btn-primary" style="width:100%" onclick="runManualAnalysis()">
+              Analizar con Claude
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Info</h2></div>
+          <div style="padding:20px 24px;color:var(--text2);font-size:13px;line-height:1.7">
+            <p>Los análisis se generan automáticamente cuando llegan alertas de TradingView.</p>
+            <p style="margin-top:12px">También podés solicitar un análisis manual en cualquier momento seleccionando el símbolo y timeframe.</p>
+            <p style="margin-top:12px">Claude analiza: precio actual, EMAs, RSI, MACD, Bollinger Bands, volumen, orderbook y dominancia BTC.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Historial de Análisis</h2>
+        </div>
+        <div id="analysis-list" style="padding:8px 16px 16px"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MARKET
+    ══════════════════════════════════════════════════════════ -->
+    <section id="page-market" class="page">
+      <div class="page-actions">
+        <span class="text-muted" style="font-size:13px">Precios en tiempo real · Binance · Auto-refresh 30s</span>
+        <button class="btn btn-sm" onclick="loadMarket()">↻ Actualizar</button>
+      </div>
+      <div id="market-grid" class="market-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MODALES
+  ══════════════════════════════════════════════════════════ -->
+
+  <!-- Modal: Nueva Billetera -->
+  <div class="modal-overlay" id="modal-wallet">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Nueva Billetera / Fondo</span>
+        <button class="modal-close" onclick="closeWalletModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-wallet" class="form">
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" name="name" class="input" placeholder="Ej: Binance Futuros" required />
+          </div>
+          <div class="form-group">
+            <label>Exchange / Plataforma *</label>
+            <input type="text" name="exchange" class="input" placeholder="Ej: Binance, Phantom, Bybit, MetaMask..." required />
+          </div>
+          <div class="form-group">
+            <label>Red / Blockchain</label>
+            <input type="text" name="network" class="input" placeholder="Ej: BSC, Solana, Ethereum..." />
+          </div>
+          <div class="form-group">
+            <label>Dirección de Wallet (opcional)</label>
+            <input type="text" name="wallet_address" class="input" placeholder="0x... o wallet pública" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Balance Inicial (USD) *</label>
+              <input type="number" name="initial_balance" class="input" step="0.01" min="0" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>Moneda</label>
+              <input type="text" name="currency" class="input" placeholder="USDT" value="USDT" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notas</label>
+            <textarea name="notes" class="input" rows="2" placeholder="Notas opcionales..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeWalletModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar Billetera</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nueva Operativa -->
+  <div class="modal-overlay" id="modal-trade">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Nueva Operativa</span>
+        <button class="modal-close" onclick="closeTradeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-trade" class="form">
+          <div class="form-group">
+            <label>Billetera / Fondo *</label>
+            <select name="wallet_id" id="trade-wallet-select" class="input" required>
+              <option value="">Seleccioná una billetera...</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Símbolo *</label>
+              <input type="text" name="symbol" class="input" placeholder="BTCUSDT" required />
+            </div>
+            <div class="form-group">
+              <label>Tipo *</label>
+              <select name="trade_type" class="input" required>
+                <option value="long">Long (Compra Apalancada)</option>
+                <option value="short">Short (Venta Apalancada)</option>
+                <option value="spot_buy">Spot Buy (Compra)</option>
+                <option value="spot_sell">Spot Sell (Venta)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Exchange</label>
+              <input type="text" name="exchange" class="input" placeholder="Binance" value="Binance" />
+            </div>
+            <div class="form-group">
+              <label>Timeframe</label>
+              <select name="timeframe" class="input">
+                <option value="5m">5 min</option>
+                <option value="15m">15 min</option>
+                <option value="1h" selected>1 hora</option>
+                <option value="4h">4 horas</option>
+                <option value="1d">1 día</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Precio de Entrada *</label>
+              <input type="number" name="entry_price" class="input" step="any" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>Cantidad *</label>
+              <input type="number" name="quantity" class="input" step="any" placeholder="0.00" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Leverage</label>
+              <input type="number" name="leverage" class="input" min="1" max="125" value="1" />
+            </div>
+            <div class="form-group">
+              <label>Stop Loss</label>
+              <input type="number" name="stop_loss" class="input" step="any" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Take Profit</label>
+            <input type="number" name="take_profit" class="input" step="any" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Notas</label>
+            <textarea name="notes" class="input" rows="2" placeholder="Ej: señal de TradingView, confluencia con EMA200..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeTradeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Abrir Operativa</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cerrar Operativa -->
+  <div class="modal-overlay" id="modal-close-trade">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Cerrar Operativa</span>
+        <button class="modal-close" onclick="closeCloseTradeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-close-trade" class="form">
+          <div id="close-trade-info" style="font-size:14px;color:var(--text2);margin-bottom:16px;padding:10px 12px;background:var(--bg3);border-radius:6px"></div>
+          <div class="form-group">
+            <label>Precio de Cierre *</label>
+            <input type="number" name="exit_price" class="input" step="any" placeholder="0.00" required />
+          </div>
+          <div class="form-group">
+            <label>Comisiones / Fees (USD)</label>
+            <input type="number" name="fees" class="input" step="0.01" min="0" placeholder="0.00" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Notas de cierre</label>
+            <textarea name="notes" class="input" rows="2" placeholder="Razón del cierre..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCloseTradeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Confirmar Cierre</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detalle Alerta / Análisis -->
+  <div class="modal-overlay" id="modal-alert-detail">
+    <div class="modal" style="max-width:660px">
+      <div class="modal-header">
+        <span class="modal-title" id="alert-detail-title">Detalle de Alerta</span>
+        <button class="modal-close" onclick="document.getElementById('modal-alert-detail').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-body" id="alert-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/js/app.js" type="module"></script>
+</body>
+</html>

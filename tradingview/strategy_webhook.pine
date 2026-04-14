@@ -1,0 +1,172 @@
+// ============================================================
+// TradingCrypto — Estrategia con alertas webhook
+// ============================================================
+// Estrategia: EMA Cross + RSI + Volume Confirmation
+//
+// Cómo usar:
+// 1. Abrí el script en TradingView (Pine Editor)
+// 2. Reemplazá WEBHOOK_URL por la URL de tu backend
+// 3. Reemplazá WEBHOOK_SECRET con tu token secreto del .env
+// 4. Agregá el indicador a un gráfico
+// 5. Creá alertas con la condición "Order fills only" o las
+//    condiciones personalizadas de abajo
+//
+// Para el webhook en TradingView:
+//   - URL: https://tu-dominio.com/api/alerts/webhook
+//   - Message: usá el mensaje dinámico de cada alerta (ver abajo)
+// ============================================================
+
+//@version=5
+strategy(
+    title       = "TradingCrypto — EMA/RSI Webhook",
+    shorttitle  = "TC_EMA_RSI",
+    overlay     = true,
+    pyramiding  = 0,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 5,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.05,
+    initial_capital   = 1000
+)
+
+// ── Inputs ────────────────────────────────────────────────────
+grpEma = "EMAs"
+emaFast  = input.int(20,  "EMA Rápida",  group=grpEma, minval=1)
+emaMid   = input.int(50,  "EMA Media",   group=grpEma, minval=1)
+emaSlow  = input.int(200, "EMA Lenta",   group=grpEma, minval=1)
+
+grpRsi = "RSI"
+rsiLen      = input.int(14, "Período RSI",    group=grpRsi, minval=2)
+rsiOverbought = input.int(70, "Sobrecompra",  group=grpRsi, minval=50, maxval=100)
+rsiOversold   = input.int(30, "Sobreventa",   group=grpRsi, minval=0,  maxval=50)
+
+grpVol = "Volumen"
+volMultiplier = input.float(1.5, "Multiplicador vol. (vs promedio)", group=grpVol, step=0.1)
+volLookback   = input.int(20,    "Período promedio de volumen",      group=grpVol)
+
+grpWh = "Webhook"
+webhookSecret = input.string("tu_token_secreto_aqui", "Token secreto", group=grpWh)
+
+// ── Cálculos ──────────────────────────────────────────────────
+ema20  = ta.ema(close, emaFast)
+ema50  = ta.ema(close, emaMid)
+ema200 = ta.ema(close, emaSlow)
+
+rsi        = ta.rsi(close, rsiLen)
+volAvg     = ta.sma(volume, volLookback)
+highVolume = volume > volAvg * volMultiplier
+
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+// ATR para niveles de SL/TP dinámicos
+atr = ta.atr(14)
+
+// ── Condiciones ───────────────────────────────────────────────
+
+// LONG: EMA20 cruza arriba EMA50 + RSI < 65 + precio sobre EMA200 + volumen alto
+longCondition = ta.crossover(ema20, ema50)
+    and rsi < rsiOverbought
+    and close > ema200
+    and highVolume
+
+// SHORT: EMA20 cruza abajo EMA50 + RSI > 35 + precio bajo EMA200 + volumen alto
+shortCondition = ta.crossunder(ema20, ema50)
+    and rsi > rsiOversold
+    and close < ema200
+    and highVolume
+
+// Cierre de posiciones
+closeLong  = ta.crossunder(ema20, ema50) or rsi > rsiOverbought
+closeShort = ta.crossover(ema20, ema50)  or rsi < rsiOversold
+
+// ── Niveles de SL / TP (basados en ATR) ───────────────────────
+slMultiplier = 1.5
+tp1Multiplier = 2.0
+tp2Multiplier = 3.5
+
+longSL  = close - atr * slMultiplier
+longTP1 = close + atr * tp1Multiplier
+longTP2 = close + atr * tp2Multiplier
+
+shortSL  = close + atr * slMultiplier
+shortTP1 = close - atr * tp1Multiplier
+shortTP2 = close - atr * tp2Multiplier
+
+// ── Estrategia (backtesting) ──────────────────────────────────
+if longCondition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=longSL, limit=longTP1)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=shortSL, limit=shortTP1)
+
+if closeLong and strategy.position_size > 0
+    strategy.close("Long")
+
+if closeShort and strategy.position_size < 0
+    strategy.close("Short")
+
+// ── Visualización ─────────────────────────────────────────────
+plot(ema20,  "EMA 20",  color=color.new(color.yellow, 0), linewidth=1)
+plot(ema50,  "EMA 50",  color=color.new(color.blue,   0), linewidth=1)
+plot(ema200, "EMA 200", color=color.new(color.red,    0), linewidth=2)
+
+// Señales en el gráfico
+plotshape(longCondition,  "Long",  shape.triangleup,   location.belowbar, color.green,  size=size.small)
+plotshape(shortCondition, "Short", shape.triangledown, location.abovbar,  color.red,    size=size.small)
+
+bgcolor(longCondition  ? color.new(color.green, 90) : na)
+bgcolor(shortCondition ? color.new(color.red,   90) : na)
+
+// ── ALERTAS WEBHOOK ───────────────────────────────────────────
+// Para cada alerta en TradingView, configurá el mensaje así:
+// (copiá el string JSON correspondiente al tipo de señal)
+
+// Mensaje para alerta LONG:
+longMessage = '{"secret":"' + webhookSecret + '","symbol":"' + syminfo.ticker + '","action":"long","timeframe":"' + timeframe.period + '","price":' + str.tostring(close) + ',"volume":' + str.tostring(volume) + ',"ema20":' + str.tostring(math.round(ema20, 4)) + ',"ema50":' + str.tostring(math.round(ema50, 4)) + ',"rsi":' + str.tostring(math.round(rsi, 2)) + ',"atr":' + str.tostring(math.round(atr, 4)) + ',"suggested_sl":' + str.tostring(math.round(longSL, 4)) + ',"suggested_tp1":' + str.tostring(math.round(longTP1, 4)) + ',"suggested_tp2":' + str.tostring(math.round(longTP2, 4)) + ',"macd":' + str.tostring(math.round(macdLine, 6)) + ',"strategy":"EMA_RSI_v1","indicator":"EMA Cross"}'
+
+// Mensaje para alerta SHORT:
+shortMessage = '{"secret":"' + webhookSecret + '","symbol":"' + syminfo.ticker + '","action":"short","timeframe":"' + timeframe.period + '","price":' + str.tostring(close) + ',"volume":' + str.tostring(volume) + ',"ema20":' + str.tostring(math.round(ema20, 4)) + ',"ema50":' + str.tostring(math.round(ema50, 4)) + ',"rsi":' + str.tostring(math.round(rsi, 2)) + ',"atr":' + str.tostring(math.round(atr, 4)) + ',"suggested_sl":' + str.tostring(math.round(shortSL, 4)) + ',"suggested_tp1":' + str.tostring(math.round(shortTP1, 4)) + ',"suggested_tp2":' + str.tostring(math.round(shortTP2, 4)) + ',"macd":' + str.tostring(math.round(macdLine, 6)) + ',"strategy":"EMA_RSI_v1","indicator":"EMA Cross"}'
+
+// Mensaje para cierre de LONG:
+closeLongMessage = '{"secret":"' + webhookSecret + '","symbol":"' + syminfo.ticker + '","action":"close_long","timeframe":"' + timeframe.period + '","price":' + str.tostring(close) + ',"rsi":' + str.tostring(math.round(rsi, 2)) + ',"strategy":"EMA_RSI_v1"}'
+
+// Mensaje para cierre de SHORT:
+closeShortMessage = '{"secret":"' + webhookSecret + '","symbol":"' + syminfo.ticker + '","action":"close_short","timeframe":"' + timeframe.period + '","price":' + str.tostring(close) + ',"rsi":' + str.tostring(math.round(rsi, 2)) + ',"strategy":"EMA_RSI_v1"}'
+
+// Disparar alertas
+if longCondition
+    alert(longMessage, alert.freq_once_per_bar_close)
+
+if shortCondition
+    alert(shortMessage, alert.freq_once_per_bar_close)
+
+if closeLong and strategy.position_size > 0
+    alert(closeLongMessage, alert.freq_once_per_bar_close)
+
+if closeShort and strategy.position_size < 0
+    alert(closeShortMessage, alert.freq_once_per_bar_close)
+
+// ============================================================
+// INSTRUCCIONES PARA CONFIGURAR LAS ALERTAS EN TRADINGVIEW
+// ============================================================
+// 1. Con el indicador en el gráfico, hacé clic en el ícono de
+//    campana (Alerts) o presioná Alt+A
+//
+// 2. En "Condition" elegí este script y la condición deseada:
+//    - "Long Signal" para entradas long
+//    - "Short Signal" para entradas short
+//
+// 3. En "Notifications":
+//    - Marcá "Webhook URL"
+//    - URL: https://TU_SERVIDOR/api/alerts/webhook
+//    - El "Message" se autocompleta con el JSON de arriba
+//
+// 4. En "Settings":
+//    - "Once Per Bar Close" para confirmar al cierre de vela
+//
+// IMPORTANTE: Tu servidor debe estar accesible desde internet.
+// Para desarrollo local podés usar ngrok:
+//   npx ngrok http 3000
+// ============================================================
