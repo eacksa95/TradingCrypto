@@ -13,7 +13,7 @@ const { Client } = pg;
 
 async function migrate() {
   const clientConfig = process.env.DATABASE_URL
-    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 10000 }
     : {
         host:     process.env.DB_HOST     || 'localhost',
         port:     parseInt(process.env.DB_PORT || '5432'),
