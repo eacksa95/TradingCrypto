@@ -68,23 +68,26 @@ app.use((err, req, res, next) => {
 
 // ── Start ────────────────────────────────────────────────────
 async function start() {
-  const dbOk = await testConnection();
-  if (!dbOk) {
-    console.error('No se pudo conectar a PostgreSQL. Verificá las variables de entorno DB_*.');
-    process.exit(1);
-  }
-
-  app.listen(PORT, () => {
-    console.log(`\n🚀 TradingCrypto Backend corriendo en http://localhost:${PORT}`);
+  // Primero levantamos el servidor (Railway ya puede hacer healthcheck)
+  app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`\n🚀 TradingCrypto Backend corriendo en puerto ${PORT}`);
     console.log(`   Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log('\nEndpoints disponibles:');
-    console.log(`  GET  /health`);
-    console.log(`  GET  /api/wallets`);
-    console.log(`  GET  /api/trades`);
-    console.log(`  POST /api/alerts/webhook   ← receptor de TradingView`);
-    console.log(`  GET  /api/market/price/:symbol`);
-    console.log(`  POST /api/analysis/manual`);
-    console.log('');
+
+    // Verificar DB con reintentos (Railway puede tardar en inyectar DATABASE_URL)
+    let dbOk = false;
+    for (let i = 1; i <= 5; i++) {
+      dbOk = await testConnection();
+      if (dbOk) break;
+      console.log(`[DB] Intento ${i}/5 fallido, reintentando en 3s...`);
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    if (!dbOk) {
+      console.error('[DB] No se pudo conectar a PostgreSQL después de 5 intentos.');
+      console.error('[DB] Variables disponibles: DATABASE_URL=' + (process.env.DATABASE_URL ? 'set' : 'NOT SET'));
+    } else {
+      console.log('[DB] Conexión establecida. Listo.');
+    }
   });
 }
 

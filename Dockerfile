@@ -1,17 +1,21 @@
-# ── Build stage ───────────────────────────────────────────────
-FROM node:20-alpine AS base
+# ── Build ─────────────────────────────────────────────────────
+FROM node:20-alpine
 WORKDIR /app
 
-# Instalar dependencias primero (aprovecha cache de Docker)
+# Dependencias primero (aprovecha layer cache de Docker)
 COPY backend/package*.json ./
 RUN npm ci --only=production
 
-# Copiar todo el proyecto
+# Código de la app
 COPY backend/ ./
+
+# SQL de migraciones (buscado por migrate.js)
 COPY database/ ./database/
 
 # ── Runtime ───────────────────────────────────────────────────
+# Railway inyecta PORT automáticamente; la app lo lee con process.env.PORT
 EXPOSE 3000
 
-# Ejecutar migraciones y luego arrancar el servidor
-CMD ["sh", "-c", "node src/scripts/migrate.js && node src/index.js"]
+# Arranca siempre el servidor; si la migración falla, el servidor igual sube
+# y la migración se puede reintentar. El || true evita que mate el contenedor.
+CMD ["sh", "-c", "node src/scripts/migrate.js || echo 'Migrate warning (tablas ya existen o error)'; node src/index.js"]
