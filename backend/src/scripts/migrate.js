@@ -29,11 +29,12 @@ async function migrate() {
     await client.connect();
     console.log('Conectado a PostgreSQL');
 
-    // Buscar el SQL en múltiples ubicaciones (local vs Docker)
+    // Buscar el SQL en múltiples ubicaciones
     const candidates = [
-      resolve(__dirname, '../../../database/migrations/001_initial_schema.sql'),  // local
-      resolve(__dirname, '../../database/migrations/001_initial_schema.sql'),     // Docker
-      resolve(process.cwd(), 'database/migrations/001_initial_schema.sql'),       // desde raíz
+      resolve(__dirname, '../../migrations/001_initial_schema.sql'),              // Docker / backend/
+      resolve(__dirname, '../../../database/migrations/001_initial_schema.sql'),  // local (desde raíz)
+      resolve(process.cwd(), 'database/migrations/001_initial_schema.sql'),
+      resolve(process.cwd(), 'migrations/001_initial_schema.sql'),
     ];
 
     let sqlPath = null;
@@ -49,11 +50,11 @@ async function migrate() {
 
     console.log('✅ Migración completada exitosamente');
   } catch (err) {
-    if (err.message.includes('already exists')) {
+    if (err.message && err.message.includes('already exists')) {
       console.log('⚠️  Las tablas ya existen — migración omitida');
     } else {
       console.error('❌ Error en migración:', err.message);
-      process.exit(1);
+      // No process.exit(1) — el servidor sigue levantando aunque falle la migración
     }
   } finally {
     await client.end();

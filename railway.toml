@@ -3,8 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Migración corre UNA vez antes de cada deploy (no bloquea el servidor)
-releaseCommand = "node src/scripts/migrate.js"
+startCommand = "node src/scripts/migrate.js; node src/index.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 healthcheckPath = "/health"

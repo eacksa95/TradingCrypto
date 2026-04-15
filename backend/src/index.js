@@ -1,4 +1,13 @@
 import 'dotenv/config';
+
+// Capturar cualquier crash antes de que Railway pierda el proceso
+process.on('uncaughtException', (err) => {
+  console.error('[CRASH] uncaughtException:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRASH] unhandledRejection:', reason);
+});
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
